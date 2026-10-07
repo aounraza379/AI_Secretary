@@ -34,9 +34,9 @@ def generate_google_calendar_link(data):
         f"Contacts: {', '.join(data.get('contact_numbers', []))}",
         f"Certificate: {details.get('certification_type', 'N/A')}",
         f"Initiative: {details.get('initiative', 'N/A')}",
-        "\nGenerated automatically by AI Secretary"
+        "\\nGenerated automatically by AI Secretary"
     ]
-    description = "\n".join(description_lines)
+    description = "\\n".join(description_lines)
     location = "NAVTTC Multan / Tech Heaven"
 
     params = {
@@ -60,14 +60,14 @@ if uploaded_file is not None:
         grayscale_img = ImageOps.grayscale(resized_img)
         ocr_text = pytesseract.image_to_string(grayscale_img)
 
-        # Separate prompt definition to avoid string template formatting syntax errors
-        prompt = "Analyze the following messy OCR text from an informational poster and extract the key details in a clean JSON format.\n"
-        prompt += "Include fields like: program_name, eligibility, duration, certification_fee, contact_numbers, and other_important_details.\n\n"
-        prompt += "OCR Text:\n" + ocr_text
-        
+        prompt = "Analyze the following messy OCR text from an informational poster and extract the key details in a clean JSON format.\\n"
+        prompt += "Include fields like: program_name, eligibility, duration, certification_fee, contact_numbers, and other_important_details.\\n\\n"
+        prompt += "OCR Text:\\n" + ocr_text
+
         try:
+            # Using gemini-2.5-flash for maximum production stability
             response = client.models.generate_content(
-                model='gemini-3.8-flash',
+                model='gemini-2.5-flash',
                 contents=prompt,
                 config={'response_mime_type': 'application/json'}
             )
