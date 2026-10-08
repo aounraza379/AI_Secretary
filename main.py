@@ -74,7 +74,7 @@ if uploaded_file is not None:
 
             try:
                 response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.3-70b-specdec",
                     messages=[
                         {"role": "system", "content": "You are a precise JSON extractor. Output ONLY JSON, no markdown formatting, no backticks, no introduction."},
                         {"role": "user", "content": prompt}
