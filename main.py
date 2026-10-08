@@ -74,7 +74,7 @@ if uploaded_file is not None:
 
             try:
                 response = client.chat.completions.create(
-                    model="llama3-70b-8192",
+                    model="openai/gpt-oss-120b",
                     messages=[
                         {"role": "system", "content": "You are a precise JSON extractor. Output ONLY JSON, no markdown formatting, no backticks, no introduction."},
                         {"role": "user", "content": prompt}
