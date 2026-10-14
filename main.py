@@ -34,15 +34,15 @@ def clean_date_for_calendar(date_str):
     """Helper to normalize various date styles to Basic Google Calendar format (YYYYMMDD)."""
     if not date_str:
         return ""
-    
+
     # Strip non-alphanumeric chars for easy matching
     clean_str = re.sub(r'[^a-zA-Z0-9\s-]', '', str(date_str)).strip()
-    
+
     # Attempt standard YYYY-MM-DD format extraction
     iso_match = re.search(r'(\d{4})[-\s]?(\d{2})[-\s]?(\d{2})', clean_str)
     if iso_match:
         return f"{iso_match.group(1)}{iso_match.group(2)}{iso_match.group(3)}"
-        
+
     # If it is natural language, we try to let Google Calendar API parse or use a standard default formatting.
     # Replace spaces/hyphens for formatting compatibility
     return urllib.parse.quote(clean_str)
@@ -183,7 +183,7 @@ OCR TEXT:
 
         try:
 
-            response = client.chat.completions.create( 
+            response = client.chat.completions.create(
                 model="openai/gpt-oss-120b",
                 messages=[
                     {
@@ -261,11 +261,13 @@ OCR TEXT:
             # Generate Google Calendar link safely
             calendar_url = generate_google_calendar_link(data)
 
+            st.markdown("---")
             if calendar_url:
-                st.markdown("---")
                 st.markdown(
                     f"**Add this to schedule:** [Add directly to Google Calendar]({calendar_url})"
                 )
+            else:
+                st.info("**Calendar Event:** No event date or deadline detected in this image, so calendar event generation was bypassed.") 
 
         except json.JSONDecodeError as jde:
             st.error(f"Failed to parse model output. Raw output was: {raw[:200]}... Error details: {jde}")
