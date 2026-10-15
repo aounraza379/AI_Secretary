@@ -12,45 +12,17 @@ st.set_page_config(page_title="AI Secretary", page_icon="📅", layout="centered
 st.title("📅 AI Secretary")
 st.markdown("**Your Intelligent Event & Document Organizer**")
 
-# Configure Sidebar / Settings & Mock Testing Suite
-with st.sidebar:
-    st.markdown("### Developer Controls")
-    show_ocr_output = st.checkbox("Show Raw OCR Debugger", value=True)
-
-    st.markdown("---")
-    st.markdown("### 🧪 Simulation & Test Suite")
-    st.markdown("Simulate edge-cases from your checklist:")
-    mock_scenario = st.selectbox(
-        "Select a test scenario",
-        [
-            "None (Use Real Upload)",
-            "Huawei/NAVTTC poster (No calendar dates)",
-            "Event Poster (With Valid Calendar Dates)",
-            "Sabzi Wala Diagram (Costs & comparisons)",
-            "Seller lifecycle diagram (No omissions)",
-            "Blurry relief poster (Limited information)",
-            "Image with no useful text (Empty OCR)",
-            "API failure or malformed output"
-        ]
-    )
-
 st.write(
     "Upload an image containing flyers, event details, schedules, "
     "or diagrams, and watch AI extract perfectly structured information."
 )
 
-# Initialize default values safely
+# Initialize default values safely from Streamlit Secrets
 api_key = ""
 try:
     api_key = st.secrets.get("GROQ_API_KEY", "")
 except Exception:
     pass
-
-if not api_key and mock_scenario == "None (Use Real Upload)":
-    st.warning(
-        "Configure your GROQ_API_KEY inside Streamlit's Secrets "
-        "manager to use live API features."
-    )
 
 try:
     from groq import Groq
@@ -58,6 +30,11 @@ try:
 except Exception:
     client = None
 
+if not api_key:
+    st.warning(
+        "⚠️ GROQ_API_KEY is missing. Please add it to your Streamlit "
+        "secrets configuration to enable intelligent document parsing."
+    )
 
 def clean_date_for_calendar(date_str):
     """Normalize date styles to YYYYMMDD."""
@@ -81,7 +58,6 @@ def clean_date_for_calendar(date_str):
         return digits
 
     return ""
-
 
 def generate_google_calendar_link(data):
     """Generate a Google Calendar event link."""
@@ -108,9 +84,8 @@ def generate_google_calendar_link(data):
 
     return f"{base_url}&{urllib.parse.urlencode(params)}"
 
-
 def generate_offline_ics(data):
-    """Generate an iCalendar (.ics) file."""
+    """Generate an iCalendar (.ics) file offline."""
     dates = data.get("dates", {})
     start_raw = dates.get("start", "") if dates else ""
     end_raw = dates.get("end", "") if dates else ""
@@ -165,204 +140,42 @@ END:VCALENDAR
 """
     return ics_content
 
-
-def get_mock_scenario_data(scenario):
-    """Simulate datasets for the functional test checklist."""
-
-    if "Huawei" in scenario:
-        return {
-            "ocr": (
-                "NAVTTC FREE HUAWEI TECH ESSENTIALS Multan ICT Academy "
-                "16 Years of Education CS 17 SE Math 18 to 40 Years "
-                "Duration 3 Months Fee FREE 0300-0741284"
-            ),
-            "json": {
-                "title": "NAVTTC FREE Huawei Tech Essentials",
-                "description": (
-                    "Building Skills, Empowering Youth, Building a Digital "
-                    "Pakistan - a Prime Minister's Initiative."
-                ),
-                "location": "Multan, Pakistan",
-                "dates": {"start": "", "end": ""},
-                "details": [
-                    {"label": "Eligibility", "value": "16 Years of Education"},
-                    {"label": "Age Limit", "value": "18 to 40 Years"},
-                    {"label": "Duration", "value": "3 Months"},
-                    {"label": "Fee", "value": "FREE"}
-                ],
-                "contacts": ["0300-0741284"],
-                "links": []
-            }
-        }
-
-    elif "Calendar" in scenario:
-        return {
-            "ocr": (
-                "AI Seminar on 2026-10-15 from 10:00 to 18:00 at NIC Hall. "
-                "Registration Deadline is 2026-10-14."
-            ),
-            "json": {
-                "title": "AI Application Seminar",
-                "description": "Hands-on workshop on building Streamlit applications.",
-                "location": "NIC Hall",
-                "dates": {"start": "2026-10-15", "end": "2026-10-15"},
-                "details": [
-                    {"label": "Registration Deadline", "value": "2026-10-14"}
-                ],
-                "contacts": [],
-                "links": ["https://example.com/register"]
-            }
-        }
-
-    elif "Sabzi Wala" in scenario:
-        return {
-            "ocr": (
-                "Sabzi Wala Model: Direct farm delivery costs 20% less. "
-                "Traditional stores charge high margins."
-            ),
-            "json": {
-                "title": "Sabzi Wala Delivery Model Comparison",
-                "description": (
-                    "Analysis of direct farm delivery versus traditional "
-                    "vegetable supply-chain structures."
-                ),
-                "location": "",
-                "dates": {"start": "", "end": ""},
-                "details": [
-                    {
-                        "label": "Key Finding",
-                        "value": "Direct farm delivery saves up to 20% on retail margins"
-                    }
-                ],
-                "contacts": [],
-                "links": []
-            }
-        }
-
-    elif "lifecycle" in scenario:
-        return {
-            "ocr": (
-                "Seller lifecycle: Registration, Verification, Listing, "
-                "Sale, Settlement. Comprehensive processes map."
-            ),
-            "json": {
-                "title": "Seller Lifecycle Map",
-                "description": (
-                    "Sequential roadmap detailing critical phases for "
-                    "independent seller onboarding and conversions."
-                ),
-                "location": "",
-                "dates": {"start": "", "end": ""},
-                "details": [
-                    {"label": "Step 1", "value": "Registration"},
-                    {"label": "Step 2", "value": "Verification"},
-                    {"label": "Step 3", "value": "Listing"},
-                    {"label": "Step 4", "value": "Sale"},
-                    {"label": "Step 5", "value": "Settlement"}
-                ],
-                "contacts": [],
-                "links": []
-            }
-        }
-
-    elif "Blurry" in scenario:
-        return {
-            "ocr": "Relief Event... Oct 24... City... urgent action",
-            "json": {
-                "title": "Relief Support Drive",
-                "description": (
-                    "Community relief and disaster assistance distribution event."
-                ),
-                "location": "City Hall",
-                "dates": {"start": "2026-10-24", "end": "2026-10-24"},
-                "details": [],
-                "contacts": [],
-                "links": []
-            }
-        }
-
-    elif "no useful" in scenario:
-        return {
-            "ocr": "...",
-            "json": {
-                "title": "Untitled Document",
-                "description": (
-                    "No text could be extracted or parsed from the supplied resource image."
-                ),
-                "location": "",
-                "dates": {"start": "", "end": ""},
-                "details": [],
-                "contacts": [],
-                "links": []
-            }
-        }
-
-    else:
-        return {
-            "ocr": "API limits or invalid keys encountered.",
-            "json": None
-        }
-
-
-# Dynamic Workflow Trigger
 ocr_text = ""
 json_parsed_data = None
 
-if mock_scenario != "None (Use Real Upload)":
-    st.info(f"Running simulated test scenario: **{mock_scenario}**")
-    mock_result = get_mock_scenario_data(mock_scenario)
-    ocr_text = mock_result["ocr"]
-    json_parsed_data = mock_result["json"]
+uploaded_file = st.file_uploader(
+    "Choose an image...",
+    type=["jpg", "jpeg", "png", "webp"]
+)
 
-else:
-    uploaded_file = st.file_uploader(
-        "Choose an image...",
-        type=["jpg", "jpeg", "png", "webp"]
-    )
+if uploaded_file is not None:
+    try:
+        image = Image.open(uploaded_file)
+        st.image(
+            image,
+            caption="Uploaded Source Image",
+            use_container_width=True
+        )
 
-    if uploaded_file is not None:
-        try:
-            image = Image.open(uploaded_file)
-            st.image(
-                image,
-                caption="Uploaded Source Image",
-                use_container_width=True
-            )
+        with st.spinner("Executing local optical character recognition..."):
+            ocr_text = pytesseract.image_to_string(image)
 
-            with st.spinner("Executing local optical character recognition..."):
-                ocr_text = pytesseract.image_to_string(image)
-
-        except Exception as e:
-            st.error(f"Error reading image or executing local OCR: {e}")
-
+    except Exception as e:
+        st.error(f"Error reading image or executing local OCR: {e}")
 
 if ocr_text:
-    if show_ocr_output:
-        st.subheader("🔍 Raw Optical Character Recognition Output")
-        edited_ocr_text = st.text_area(
-            "Review and make corrections to raw OCR results before compiling:",
-            value=ocr_text,
-            height=150
-        )
-        ocr_text = edited_ocr_text
+    st.subheader("🔍 Raw Optical Character Recognition Output")
+    edited_ocr_text = st.text_area(
+        "Review and make corrections to raw OCR results before compiling:",
+        value=ocr_text,
+        height=150
+    )
+    ocr_text = edited_ocr_text
 
-    # Parse OCR using LLM or Mock
+    # Parse OCR using Groq API
     if json_parsed_data is None and ocr_text:
         if not client:
-            st.info(
-                "Mocking LLM processing as no active Groq client "
-                "configuration is present."
-            )
-            json_parsed_data = {
-                "title": "Extracted Event",
-                "description": f"Automatic summary: {ocr_text[:120]}...",
-                "location": "Unknown",
-                "dates": {"start": "", "end": ""},
-                "details": [],
-                "contacts": [],
-                "links": []
-            }
-
+            st.error("Cannot parse structured events: No active API credentials configured.")
         else:
             with st.spinner("AI is parsing structured data..."):
                 try:
@@ -384,8 +197,8 @@ if ocr_text:
                         f"OCR text:\n{ocr_text}"
                     )
 
-                    response = client.chat.completions.create(
-                        model="openai/gpt-oss-120b",
+                    response = client.chat.completions.create( 
+                        model="llama3-8b-8192",
                         messages=[
                             {
                                 "role": "system",
